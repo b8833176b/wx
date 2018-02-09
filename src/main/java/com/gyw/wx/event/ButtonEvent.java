@@ -2,6 +2,7 @@ package com.gyw.wx.event;
 
 
 import com.gyw.wx.common.ConstStr;
+import com.gyw.wx.resume.service.ResumeService;
 import com.gyw.wx.service.IMessageMgrService;
 import com.gyw.wx.service.model.message.common.TextMessage;
 import com.gyw.wx.utils.MsgUtil;
@@ -22,7 +23,9 @@ import java.util.Map;
 public class ButtonEvent implements IButtonEvent {
 	@Autowired
 	private IMessageMgrService msgService;
-	
+
+	@Autowired
+	private ResumeService resumeService;
 
 	/**
 	 * 处理微信发来的请求
@@ -62,8 +65,25 @@ public class ButtonEvent implements IButtonEvent {
 
 		// 文本消息
 		if (msgType.equals(ConstStr.REQ_MESSAGE_TYPE_TEXT)) {
-//			respContent = "您发送的是文本消息！";
-			respContent=TulingApiUtil.getTulingResult(msgContent);//使用图灵机器人api
+            //如果以./。号开头 特殊处理;
+			if(msgContent.startsWith("。")||msgContent.startsWith(".")){
+				String msg = msgContent.substring(1);
+				msg = msg.trim();
+				if("郭有为".equals(msg)){
+					respContent = "回复以下关键字：\n"
+					+"。基本信息\n"
+					+"。项目经验\n"
+					+"。工作经历\n"
+					+"。职业技能\n"
+					+"。自我评价";
+				}else{
+					respContent = resumeService.getContentByType(msg);
+					if(respContent==null|| "".equals(respContent))
+						respContent = "暂不提供该查询："+msg;
+				}
+			}else{
+				respContent=TulingApiUtil.getTulingResult(msgContent);//使用图灵机器人api
+			}
 		}
 		// 图片消息
 		else if (msgType.equals(ConstStr.REQ_MESSAGE_TYPE_IMAGE)) {
